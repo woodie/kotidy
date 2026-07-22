@@ -129,6 +129,17 @@ credentials available here):
    added) also gets simpler at that point -- no more sibling-checkout dance
    for kotidy specifically.
 
+`CI.yml` now has a `publish` job gated on `startsWith(github.ref,
+'refs/tags/v')` and `needs: test`, reading `GRADLE_PUBLISH_KEY`/
+`GRADLE_PUBLISH_SECRET` from repo secrets (already added). This covers
+*future* tags -- it does not retroactively apply to the already-pushed
+`v0.1.0` tag, since GitHub reads a tag-triggered workflow from the commit
+the tag itself points to, and that commit predates this job. The first
+real publish for `v0.1.0` still needs a manual `./gradlew publishPlugins`
+from a real Mac (using the same key/secret, already in
+`~/.gradle/gradle.properties`); `v0.1.1` onward can rely on the tag push
+alone.
+
 ## Why kotidy doesn't dogfood itself
 
 `gorderly`/`xctidy` both dogfood themselves against their own test suites

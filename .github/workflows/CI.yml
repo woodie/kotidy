@@ -3,6 +3,11 @@ name: CI
 on:
   push:
     branches: ["main"]
+    # Tags matching v* (e.g. v0.1.0) additionally trigger the publish job
+    # below -- pushing a tag is how a build here becomes a real Gradle
+    # Plugin Portal release, not just a CI-verified one. Matches huck's own
+    # windows-package.yml tag-triggered release pattern.
+    tags: ["v*"]
   pull_request:
     branches: ["main"]
 
@@ -29,3 +34,30 @@ jobs:
         # convenience; that's wrong here since a CI-side fix never gets
         # committed back). check already runs ktlintCheck + test together.
         run: ./gradlew clean check
+
+  publish:
+    # Only on a version tag, not on every push to main or PR -- and only
+    # after test passes, so a broken build never reaches the Portal.
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Publish to Gradle Plugin Portal
+        # GRADLE_PUBLISH_KEY/GRADLE_PUBLISH_SECRET are the env var names
+        # com.gradle.plugin-publish reads automatically, no -P flags needed
+        # -- see docs/COWORK.md for the account/domain-verification steps
+        # this doesn't automate (the first publish still needs manual
+        # Portal approval regardless of who/what triggers it).
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+        run: ./gradlew publishPlugins

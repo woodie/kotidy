@@ -66,10 +66,14 @@ days, at which point you will be contacted via email.
   a GitHub account and switching to `io.github.woodie.kotidy` instead --
   deliberately declined in favor of keeping `com.netpress.kotidy`, matching
   `humane-kotlin`'s existing `com.netpress` group. The TXT record has been
-  added and confirmed live via `dig TXT netpress.com`; per the request
-  email, a Gradle engineer re-reviews within a few
-  days -- there's no explicit "I've added it, please recheck" step, just
-  waiting for the next review pass.
+  added and confirmed live via `dig TXT netpress.com`. Also linked GitHub
+  (`woodie`) to the Portal account, even though the plugin ID stayed
+  `com.netpress.kotidy` rather than switching to `io.github.woodie.kotidy`
+  -- closes the *other* common rejection reason (an unlinked GitHub account
+  can't vouch for a `vcsUrl` pointing at a GitHub repo), separate from the
+  domain check. Per the request email, a Gradle engineer re-reviews within
+  a few days -- there's no explicit "I've fixed it, please recheck" step,
+  just waiting for the next pass.
 - Two possible outcomes arrive by email to the account's address (no
   status dashboard to poll): acceptance, or a list of requested changes to
   fix and resubmit.

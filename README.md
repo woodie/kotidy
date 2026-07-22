@@ -1,6 +1,8 @@
 # kotidy
 
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2.10-7F52FF?logo=kotlin&logoColor=white)](build.gradle.kts)
 [![CI](https://github.com/woodie/kotidy/actions/workflows/CI.yml/badge.svg)](https://github.com/woodie/kotidy/actions/workflows/CI.yml)
+[![Release](https://img.shields.io/github/v/release/woodie/kotidy.svg)](https://github.com/woodie/kotidy/releases/latest)
 [![License](https://img.shields.io/github/license/woodie/kotidy.svg)](LICENSE)
 
 RSpec style output for Kotest's `DescribeSpec`, via a real Gradle plugin --

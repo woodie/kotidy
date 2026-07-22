@@ -92,42 +92,30 @@ confirmed working (see "Current status" below).
 
 Woodie then decided to actually publish `kotidy` to the Gradle Plugin Portal
 instead of staying composite-build-only -- unlike every other shared library
-in this account. `com.gradle.plugin-publish` (2.1.1) is now applied, with
+in this account. `com.gradle.plugin-publish` (2.1.1) is applied, with
 `gradlePlugin { website; vcsUrl }` and the plugin's own `displayName`/
-`description`/`tags` set. What's still outstanding, and can't happen from
-this sandbox (no network route to `plugins.gradle.org`, no portal
-credentials available here):
+`description`/`tags` set.
 
-1. Woodie creates a Gradle Plugin Portal account and API key
-   (`plugins.gradle.org/user/register` → API Keys tab), and adds
-   `gradle.publish.key`/`gradle.publish.secret` to
-   `~/.gradle/gradle.properties` (or passes them as `-P` flags, or via
-   `GRADLE_PUBLISH_KEY`/`GRADLE_PUBLISH_SECRET` env vars).
-2. `./gradlew publishPlugins --validate-only`, then `./gradlew publishPlugins`
-   from a real Mac.
-3. Confirmed against the Portal's own current publish-plugin docs
-   (`plugins.gradle.org/docs/publish-plugin`), not assumed: `com.netpress.*`
-   as the group/plugin-ID namespace will almost certainly trigger the manual
-   domain-ownership step, not just a generic review -- the docs are explicit
-   that a non-`io.github.<user>` group gets asked to "prove ownership of the
-   organization's domain by adding some random TXT DNS record" (here,
-   `netpress.com`). Woodie's account email (`woodie@netpress.com`) suggests
-   he can actually do this, but it's a real, concrete step to expect, not
-   just paperwork -- and the publishing account should ideally be a
-   corporate/group address for `netpress.com`, per the same docs, rather
-   than a personal one. `publishPlugins`'s own console output says whether
-   the plugin is pending approval; acceptance and any requested changes
-   both arrive by email to the account's registered address, not a visible
-   dashboard status page.
-4. Only *after* the plugin is confirmed live and installable from the portal
-   should `next-caltrain-kotlin`/`humane-kotlin`/`huck` switch from
-   `pluginManagement { includeBuild("../kotidy") }` to a plain
-   `id("com.netpress.kotidy") version "0.1.0"` (with `gradlePluginPortal()`
-   in their `pluginManagement.repositories`) -- ripping out the working
-   composite-build wiring before the portal publish is actually live would
-   just break all three for however long approval takes. Their CI (once
-   added) also gets simpler at that point -- no more sibling-checkout dance
-   for kotidy specifically.
+`v0.1.0` has actually been submitted -- account created, API key generated,
+`./gradlew publishPlugins` run from a real Mac. As expected from the Portal's
+own docs, the non-`io.github.<user>` group (`com.netpress.*`) triggered the
+manual domain-ownership check: a DNS TXT record on `netpress.com`, added and
+confirmed live via `dig`, plus linking the GitHub account (`woodie`) to the
+Portal profile to close the other common rejection reason. Both are done.
+See `docs/DELIVERY.md` for the full sequencing, exact TXT value, and what a
+future release's publish flow looks like -- this doc won't duplicate it.
+
+As of this writing, `com.netpress.kotidy` is still pending a Gradle
+engineer's manual re-review (first-version approval only; no visible status
+dashboard, just an eventual email). Once that lands and the plugin is
+confirmed resolvable from `gradlePluginPortal()`,
+[issue #1](https://github.com/woodie/kotidy/issues/1) tracks switching
+`next-caltrain-kotlin`/`humane-kotlin`/`huck` from
+`pluginManagement { includeBuild("../kotidy") }` to a plain
+`id("com.netpress.kotidy") version "0.1.0"` -- ripping out the working
+composite-build wiring before the portal publish is actually live would just
+break all three for however long approval takes. Their CI also gets simpler
+at that point -- no more sibling-checkout dance for kotidy specifically.
 
 `CI.yml` now has a `publish` job gated on `startsWith(github.ref,
 'refs/tags/v')` and `needs: test`, reading `GRADLE_PUBLISH_KEY`/

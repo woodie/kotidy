@@ -101,6 +101,10 @@ to publish.
 
 ## Once the Portal publish is confirmed live and approved
 
+[Issue #1](https://github.com/woodie/kotidy/issues/1) tracks this switch-over
+-- work through it there rather than treating this section as the checklist
+of record.
+
 Switch `next-caltrain-kotlin`/`humane-kotlin`/`huck` off the composite
 build:
 

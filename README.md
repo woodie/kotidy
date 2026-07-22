@@ -5,6 +5,8 @@
 [![Release](https://img.shields.io/github/v/release/woodie/kotidy.svg)](https://github.com/woodie/kotidy/releases/latest)
 [![License](https://img.shields.io/github/license/woodie/kotidy.svg)](LICENSE)
 
+![Example Screenshot](docs/example.png)
+
 RSpec style output for Kotest's `DescribeSpec`, via a real Gradle plugin --
 no CLI wrapper or text-output parsing required.
 

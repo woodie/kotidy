@@ -101,13 +101,24 @@ credentials available here):
 1. Woodie creates a Gradle Plugin Portal account and API key
    (`plugins.gradle.org/user/register` → API Keys tab), and adds
    `gradle.publish.key`/`gradle.publish.secret` to
-   `~/.gradle/gradle.properties` (or passes them as `-P` flags).
+   `~/.gradle/gradle.properties` (or passes them as `-P` flags, or via
+   `GRADLE_PUBLISH_KEY`/`GRADLE_PUBLISH_SECRET` env vars).
 2. `./gradlew publishPlugins --validate-only`, then `./gradlew publishPlugins`
    from a real Mac.
-3. The portal's manual approval process runs (documented as "a few days").
-   `com.netpress.*` as the plugin ID/group namespace may need proving
-   ownership of `netpress.com` during that review, since it isn't a
-   well-known pattern like `io.github.<user>`.
+3. Confirmed against the Portal's own current publish-plugin docs
+   (`plugins.gradle.org/docs/publish-plugin`), not assumed: `com.netpress.*`
+   as the group/plugin-ID namespace will almost certainly trigger the manual
+   domain-ownership step, not just a generic review -- the docs are explicit
+   that a non-`io.github.<user>` group gets asked to "prove ownership of the
+   organization's domain by adding some random TXT DNS record" (here,
+   `netpress.com`). Woodie's account email (`woodie@netpress.com`) suggests
+   he can actually do this, but it's a real, concrete step to expect, not
+   just paperwork -- and the publishing account should ideally be a
+   corporate/group address for `netpress.com`, per the same docs, rather
+   than a personal one. `publishPlugins`'s own console output says whether
+   the plugin is pending approval; acceptance and any requested changes
+   both arrive by email to the account's registered address, not a visible
+   dashboard status page.
 4. Only *after* the plugin is confirmed live and installable from the portal
    should `next-caltrain-kotlin`/`humane-kotlin`/`huck` switch from
    `pluginManagement { includeBuild("../kotidy") }` to a plain

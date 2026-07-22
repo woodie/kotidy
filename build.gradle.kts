@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     `java-gradle-plugin`
     kotlin("jvm") version "2.2.10"
@@ -41,6 +43,20 @@ gradlePlugin {
                 "matching gorderly (Go)/xctidy (Swift)."
             tags = listOf("testing", "kotlin", "kotest", "test-logging")
             implementationClass = "com.netpress.kotidy.KotidyPlugin"
+
+            // Required as of plugin-publish 2.1.0+ (publishing without it is
+            // deprecated, soon to be rejected outright). true because
+            // KotidyPlugin.kt's counters/timing are deliberately reset in
+            // doFirst {} and read real per-test TestResult timestamps rather
+            // than a value captured once at configuration time -- see
+            // docs/COWORK.md's "Configuration-cache safety" section for the
+            // real bug (next-caltrain-kotlin's own dropped summary line) this
+            // was designed around.
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }

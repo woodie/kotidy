@@ -75,19 +75,48 @@ Follows the family's naming pattern: `gorderly` (Go + orderly),
 over a couple of other candidates (`gradorderly`, `kotlinly`) -- Woodie's
 call, not derived from anything in the code.
 
-## Packaging: composite build, plugin-specific mechanism
+## Packaging: composite build first, real publish now underway
 
-Like `humane-kotlin`, there's no published artifact -- but a *plugin*
-composite build needs a different Gradle mechanism than a regular library
-one. `huck`'s `settings.gradle.kts` pulls in `humane-kotlin` with a plain
-`includeBuild("../humane-kotlin")` in the main body, because that's a normal
-dependency substitution. Consuming `kotidy`'s plugin ID instead requires
-`pluginManagement { includeBuild("../kotidy") }` -- Gradle only resolves a
-`plugins { id("com.netpress.kotidy") }` request against an included build's
-declared plugin ID (see this repo's own `build.gradle.kts` `gradlePlugin {}`
-block) if that build was included from inside `pluginManagement`, not the
-main body. Getting this wrong produces a "Plugin … not found" resolution
-error, not a silent fallback.
+Like `humane-kotlin`, this started with no published artifact -- but a
+*plugin* composite build needs a different Gradle mechanism than a regular
+library one. `huck`'s `settings.gradle.kts` pulls in `humane-kotlin` with a
+plain `includeBuild("../humane-kotlin")` in the main body, because that's a
+normal dependency substitution. Consuming `kotidy`'s plugin ID instead
+required `pluginManagement { includeBuild("../kotidy") }` -- Gradle only
+resolves a `plugins { id("com.netpress.kotidy") }` request against an
+included build's declared plugin ID (see this repo's own `build.gradle.kts`
+`gradlePlugin {}` block) if that build was included from inside
+`pluginManagement`, not the main body. Getting this wrong produces a
+"Plugin … not found" resolution error, not a silent fallback. This is
+confirmed working (see "Current status" below).
+
+Woodie then decided to actually publish `kotidy` to the Gradle Plugin Portal
+instead of staying composite-build-only -- unlike every other shared library
+in this account. `com.gradle.plugin-publish` (2.1.1) is now applied, with
+`gradlePlugin { website; vcsUrl }` and the plugin's own `displayName`/
+`description`/`tags` set. What's still outstanding, and can't happen from
+this sandbox (no network route to `plugins.gradle.org`, no portal
+credentials available here):
+
+1. Woodie creates a Gradle Plugin Portal account and API key
+   (`plugins.gradle.org/user/register` → API Keys tab), and adds
+   `gradle.publish.key`/`gradle.publish.secret` to
+   `~/.gradle/gradle.properties` (or passes them as `-P` flags).
+2. `./gradlew publishPlugins --validate-only`, then `./gradlew publishPlugins`
+   from a real Mac.
+3. The portal's manual approval process runs (documented as "a few days").
+   `com.netpress.*` as the plugin ID/group namespace may need proving
+   ownership of `netpress.com` during that review, since it isn't a
+   well-known pattern like `io.github.<user>`.
+4. Only *after* the plugin is confirmed live and installable from the portal
+   should `next-caltrain-kotlin`/`humane-kotlin`/`huck` switch from
+   `pluginManagement { includeBuild("../kotidy") }` to a plain
+   `id("com.netpress.kotidy") version "0.1.0"` (with `gradlePluginPortal()`
+   in their `pluginManagement.repositories`) -- ripping out the working
+   composite-build wiring before the portal publish is actually live would
+   just break all three for however long approval takes. Their CI (once
+   added) also gets simpler at that point -- no more sibling-checkout dance
+   for kotidy specifically.
 
 ## Why kotidy doesn't dogfood itself
 
@@ -112,10 +141,38 @@ Built by inspection in a sandbox with no network route to Gradle's own
 distribution server (confirmed: `./gradlew clean test` fails resolving
 `services.gradle.org` trying to download the pinned `gradle-9.4.1-bin.zip`
 wrapper) -- matches every other Kotlin/Go/Swift repo in this account per
-`~/workspace/woodie/docs/COWORK.md`'s "Working on unfamiliar stacks". Nothing
-here has been run for real yet. `make build`/`make test`/`make lint`/
-`make check` all need confirming on a real Mac before this is trusted,
-same as every other repo's first pass.
+`~/workspace/woodie/docs/COWORK.md`'s "Working on unfamiliar stacks".
+
+`make build` and `make test` both confirmed green on a real Mac (JDK/Gradle
+9.4.1, Kotlin 2.2.10). First real `make build` caught one genuine bug
+inspection missed: the ANSI escape constants in `Styles.kt` were originally
+named lowerCamelCase (`ansiReset`, `ansiRed`, etc.) as `const val`s --
+`ktlintMainSourceSetFormat` failed with "Property name should use the
+screaming snake case notation when the value can not be changed
+(cannot be auto-corrected)" for all seven. Renamed to
+`ANSI_RESET`/`ANSI_RED`/etc. and it went green -- this is the opposite
+naming direction from what the three consumer repos' old copy-pasted block
+needed (`.editorconfig`'s `ktlint_standard_property-naming` disable there
+existed because those were plain `val`s, not real `const val`s, so ktlint
+wanted to *lowercase* them instead).
+
+`make test` was also silent by design before a fix -- kotidy can't apply its
+own tree renderer to its own build (see "Why kotidy doesn't dogfood itself"
+above), and Gradle's default lifecycle logging prints nothing per test
+without `testLogging {}` configured, so the very first real `make test` run
+showed zero test output despite passing. Added `testLogging { events(...) }`
+to `build.gradle.kts` -- flat `ClassName > testName PASSED` lines now, not a
+tree (that only renders in a consumer that applies the plugin), but real
+per-test visibility again, matching the account's verbose-test-output
+convention.
+
+`humane-kotlin`'s own `make test` confirmed the actual consumer path end to
+end on a real Mac: `pluginManagement { includeBuild("../kotidy") }` resolved
+correctly, `style = "fs"` rendered the real nested describe/context/it tree
+with no blank-line padding within a suite, and the reintroduced `Test
+Succeeded`/`Tests Passed: 0 failed, 0 skipped, 45 total (0.0570 seconds)`
+footer printed correctly at the end. `next-caltrain-kotlin`/`huck` and
+`make lint`/`make check` still need confirming.
 
 ## Consumed by
 

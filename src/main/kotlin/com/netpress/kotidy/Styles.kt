@@ -9,7 +9,9 @@ import kotlin.math.roundToLong
  * format, Mocha's spec format, and Vitest's own tree reporter respectively. See
  * README's style table.
  */
-enum class Style(val flag: String) {
+enum class Style(
+    val flag: String,
+) {
     CLASSIC("classic"),
     FD("fd"),
     FS("fs"),
@@ -21,17 +23,16 @@ enum class Style(val flag: String) {
     }
 }
 
-private const val ansiReset = "[0m"
-private const val ansiRed = "[31m"
-private const val ansiGreen = "[32m"
-private const val ansiBrightGreen = "[92m"
-private const val ansiYellow = "[33m"
-private const val ansiCyan = "[36m"
-private const val ansiGray = "[90m"
+private const val ANSI_RESET = "[0m"
+private const val ANSI_RED = "[31m"
+private const val ANSI_GREEN = "[32m"
+private const val ANSI_BRIGHT_GREEN = "[92m"
+private const val ANSI_YELLOW = "[33m"
+private const val ANSI_CYAN = "[36m"
+private const val ANSI_GRAY = "[90m"
 
 /** Respects the NO_COLOR convention (https://no-color.org/) -- caller decides enabled. */
-fun colorizer(enabled: Boolean): (String, String) -> String =
-    { code, text -> if (enabled) "$code$text$ansiReset" else text }
+fun colorizer(enabled: Boolean): (String, String) -> String = { code, text -> if (enabled) "$code$text$ANSI_RESET" else text }
 
 // Matches ginkgo-fd's/gorderly's/xctidy's own precision split: sub-second runs
 // (the overwhelming majority of unit tests) get enough decimals to be
@@ -77,13 +78,13 @@ fun colorizePass(
     colorize: (String, String) -> String,
 ): String =
     when (style) {
-        Style.CLASSIC -> "${colorize(ansiGreen, "✔")} $name (${colorize(ansiGreen, formatSeconds(elapsedSeconds))} seconds)"
-        Style.FS -> "${colorize(ansiGreen, "✔")} ${colorize(ansiGray, name)}"
+        Style.CLASSIC -> "${colorize(ANSI_GREEN, "✔")} $name (${colorize(ANSI_GREEN, formatSeconds(elapsedSeconds))} seconds)"
+        Style.FS -> "${colorize(ANSI_GREEN, "✔")} ${colorize(ANSI_GRAY, name)}"
         Style.FV -> {
             val (num, unit) = formatVitestDurationParts(elapsedSeconds)
-            "${colorize(ansiGreen, "✓")} $name ${colorize(ansiGreen, num)}${colorize(ansiBrightGreen, unit)}"
+            "${colorize(ANSI_GREEN, "✓")} $name ${colorize(ANSI_GREEN, num)}${colorize(ANSI_BRIGHT_GREEN, unit)}"
         }
-        Style.FD -> colorize(ansiGreen, name)
+        Style.FD -> colorize(ANSI_GREEN, name)
     }
 
 fun colorizeFail(
@@ -95,15 +96,15 @@ fun colorizeFail(
 ): String =
     when (style) {
         Style.CLASSIC ->
-            "${colorize(ansiRed, "✖")} $name (FAILED - $failureNumber)" +
-                " (${colorize(ansiRed, formatSeconds(elapsedSeconds))} seconds)"
-        Style.FS -> colorize(ansiRed, "✗ $name (FAILED - $failureNumber)")
+            "${colorize(ANSI_RED, "✖")} $name (FAILED - $failureNumber)" +
+                " (${colorize(ANSI_RED, formatSeconds(elapsedSeconds))} seconds)"
+        Style.FS -> colorize(ANSI_RED, "✗ $name (FAILED - $failureNumber)")
         Style.FV ->
             // No inline "(FAILED - N)" -- Vitest's own tree doesn't number
             // failures inline either; the trailing Failures: section still
             // cross-references by number, same as gorderly/xctidy's -fv.
-            colorize(ansiRed, "× $name ${formatVitestDuration(elapsedSeconds)}")
-        Style.FD -> colorize(ansiRed, "$name (FAILED - $failureNumber)")
+            colorize(ANSI_RED, "× $name ${formatVitestDuration(elapsedSeconds)}")
+        Style.FD -> colorize(ANSI_RED, "$name (FAILED - $failureNumber)")
     }
 
 fun colorizeSkip(
@@ -113,10 +114,10 @@ fun colorizeSkip(
     colorize: (String, String) -> String,
 ): String =
     when (style) {
-        Style.CLASSIC -> "${colorize(ansiCyan, "⊘")} $name (${colorize(ansiCyan, formatSeconds(elapsedSeconds))} seconds)"
-        Style.FS -> colorize(ansiCyan, "- $name (SKIPPED)")
-        Style.FV -> colorize(ansiGray, "↓ $name")
-        Style.FD -> colorize(ansiYellow, "$name (PENDING)")
+        Style.CLASSIC -> "${colorize(ANSI_CYAN, "⊘")} $name (${colorize(ANSI_CYAN, formatSeconds(elapsedSeconds))} seconds)"
+        Style.FS -> colorize(ANSI_CYAN, "- $name (SKIPPED)")
+        Style.FV -> colorize(ANSI_GRAY, "↓ $name")
+        Style.FD -> colorize(ANSI_YELLOW, "$name (PENDING)")
     }
 
 /**
@@ -135,9 +136,9 @@ fun vitestSummaryLine(
     colorize: (String, String) -> String,
 ): String {
     val parts = mutableListOf<String>()
-    if (failed > 0) parts += colorize(ansiRed, "$failed failed")
-    if (passed > 0) parts += colorize(ansiGreen, "$passed passed")
-    if (skipped > 0) parts += colorize(ansiGray, "$skipped skipped")
+    if (failed > 0) parts += colorize(ANSI_RED, "$failed failed")
+    if (passed > 0) parts += colorize(ANSI_GREEN, "$passed passed")
+    if (skipped > 0) parts += colorize(ANSI_GRAY, "$skipped skipped")
     if (parts.isEmpty()) parts += "0 passed"
     return String.format(Locale.ROOT, "%11s", label) + "  " + parts.joinToString(" | ") + " ($total)"
 }
@@ -151,7 +152,7 @@ fun standardFooter(
     colorize: (String, String) -> String,
 ): List<String> {
     val verdict = if (failedCount > 0) "Test Failed" else "Test Succeeded"
-    val verdictColor = if (failedCount > 0) ansiRed else ansiGreen
+    val verdictColor = if (failedCount > 0) ANSI_RED else ANSI_GREEN
     return listOf(
         colorize(verdictColor, verdict),
         colorize(

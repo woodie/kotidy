@@ -1,5 +1,6 @@
 # kotidy
 
+[![CI](https://github.com/woodie/kotidy/actions/workflows/CI.yml/badge.svg)](https://github.com/woodie/kotidy/actions/workflows/CI.yml)
 [![License](https://img.shields.io/github/license/woodie/kotidy.svg)](LICENSE)
 
 RSpec style output for Kotest's `DescribeSpec`, via a real Gradle plugin --
@@ -17,12 +18,24 @@ text.
 
 ## Installation
 
-No published artifact -- `kotidy` is consumed as a Gradle composite build,
-the same pattern `huck` already uses for `humane-kotlin` (see that repo's own
-`docs/COWORK.md` for why: no Maven Central/Gradle Plugin Portal publish step,
-just a sibling checkout on disk). Check this repo out next to the consuming
-project (`~/workspace/kotidy`, `~/workspace/<your-repo>`), then in the
-consumer's `settings.gradle.kts`:
+Publishing to the [Gradle Plugin Portal](https://plugins.gradle.org) is
+underway (see `docs/COWORK.md` for status) -- once live and approved there,
+consuming it is just:
+
+```kotlin
+plugins {
+    id("com.netpress.kotidy") version "0.1.0"
+}
+```
+
+with `gradlePluginPortal()` in the consumer's `pluginManagement.repositories`.
+No sibling checkout needed at that point.
+
+Until then, `kotidy` is consumed as a Gradle composite build -- the same
+pattern `huck` already uses for `humane-kotlin` (see that repo's own
+`docs/COWORK.md`). Check this repo out next to the consuming project
+(`~/workspace/kotidy`, `~/workspace/<your-repo>`), then in the consumer's
+`settings.gradle.kts`:
 
 ```kotlin
 pluginManagement {

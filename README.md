@@ -22,9 +22,7 @@ text.
 
 ## Installation
 
-Publishing to the [Gradle Plugin Portal](https://plugins.gradle.org) is
-underway (see `docs/COWORK.md` for status) -- once live and approved there,
-consuming it is just:
+Published and approved on the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.netpress.kotidy):
 
 ```kotlin
 plugins {
@@ -33,13 +31,15 @@ plugins {
 ```
 
 with `gradlePluginPortal()` in the consumer's `pluginManagement.repositories`.
-No sibling checkout needed at that point.
+No sibling checkout needed -- `next-caltrain-kotlin`, `humane-kotlin`, and
+`huck` all consume it this way.
 
-Until then, `kotidy` is consumed as a Gradle composite build -- the same
-pattern `huck` already uses for `humane-kotlin` (see that repo's own
-`docs/COWORK.md`). Check this repo out next to the consuming project
-(`~/workspace/kotidy`, `~/workspace/<your-repo>`), then in the consumer's
-`settings.gradle.kts`:
+Before the Portal publish was approved, `kotidy` was consumed as a Gradle
+composite build instead -- the same pattern `huck` still uses for
+`humane-kotlin`. That path still works if you'd rather build against a local
+checkout (e.g. while developing `kotidy` itself): check this repo out next
+to the consuming project (`~/workspace/kotidy`, `~/workspace/<your-repo>`),
+then in the consumer's `settings.gradle.kts`:
 
 ```kotlin
 pluginManagement {
@@ -47,7 +47,8 @@ pluginManagement {
 }
 ```
 
-And in its `build.gradle.kts`:
+And in its `build.gradle.kts`, drop the `version` from the `plugins {}`
+block:
 
 ```kotlin
 plugins {

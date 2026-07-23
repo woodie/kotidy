@@ -99,28 +99,26 @@ to, so the already-pushed `v0.1.0` tag predates this job and had to be
 published manually (above). `v0.1.1` onward can rely on the tag push alone
 to publish.
 
-## Once the Portal publish is confirmed live and approved
+## Switching consumers off the composite build (done)
 
-[Issue #1](https://github.com/woodie/kotidy/issues/1) tracks this switch-over
--- work through it there rather than treating this section as the checklist
-of record.
+`com.netpress.kotidy` was approved, and
+[issue #1](https://github.com/woodie/kotidy/issues/1) tracked switching
+`next-caltrain-kotlin`/`humane-kotlin`/`huck` off the composite build once
+that happened. All three now:
 
-Switch `next-caltrain-kotlin`/`humane-kotlin`/`huck` off the composite
-build:
+- Have `includeBuild("../kotidy")` removed from `pluginManagement {}`.
+- Resolve `com.netpress.kotidy` via the `gradlePluginPortal()` already in
+  each consumer's `pluginManagement.repositories`.
+- Pin `id("com.netpress.kotidy") version "0.1.0"` in `build.gradle.kts`
+  (bump this when a newer version is published).
+- Have a single-checkout CI -- `humane-kotlin`'s `CI.yml` dropped the
+  sibling-checkout step for `kotidy` specifically (`next-caltrain-kotlin`
+  never had one, and `huck`'s only workflow never touched kotidy).
 
-- Remove `includeBuild("../kotidy")` from each consumer's
-  `pluginManagement {}` block.
-- Add `gradlePluginPortal()` to each consumer's
-  `pluginManagement.repositories` if not already present.
-- Change `id("com.netpress.kotidy")` to
-  `id("com.netpress.kotidy") version "0.1.0"` (or whatever the latest
-  published version is) in each consumer's `build.gradle.kts`.
-- Simplify each consumer's CI to a single checkout -- the sibling-checkout
-  step for `kotidy` specifically is no longer needed.
-
-Don't do this before the Portal listing is confirmed live -- ripping out a
-working composite build in favor of a plugin ID that isn't resolvable yet
-breaks all three consumers for however long approval takes.
+For the next plugin this account publishes: don't switch a consumer over
+before the Portal listing is confirmed live -- ripping out a working
+composite build in favor of a plugin ID that isn't resolvable yet breaks
+every consumer for however long approval takes.
 
 ## Pre-flight checklist for cutting a release
 

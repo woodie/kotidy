@@ -105,17 +105,15 @@ Portal profile to close the other common rejection reason. Both are done.
 See `docs/DELIVERY.md` for the full sequencing, exact TXT value, and what a
 future release's publish flow looks like -- this doc won't duplicate it.
 
-As of this writing, `com.netpress.kotidy` is still pending a Gradle
-engineer's manual re-review (first-version approval only; no visible status
-dashboard, just an eventual email). Once that lands and the plugin is
-confirmed resolvable from `gradlePluginPortal()`,
-[issue #1](https://github.com/woodie/kotidy/issues/1) tracks switching
-`next-caltrain-kotlin`/`humane-kotlin`/`huck` from
-`pluginManagement { includeBuild("../kotidy") }` to a plain
-`id("com.netpress.kotidy") version "0.1.0"` -- ripping out the working
-composite-build wiring before the portal publish is actually live would just
-break all three for however long approval takes. Their CI also gets simpler
-at that point -- no more sibling-checkout dance for kotidy specifically.
+`com.netpress.kotidy` was approved after the Gradle engineer's manual
+re-review and is now live and resolvable from `gradlePluginPortal()`.
+[Issue #1](https://github.com/woodie/kotidy/issues/1) tracked switching
+`next-caltrain-kotlin`/`humane-kotlin`/`huck` off the composite build once
+that happened -- done, all three now pin
+`id("com.netpress.kotidy") version "0.1.0"` instead of
+`pluginManagement { includeBuild("../kotidy") }`. `humane-kotlin`'s CI also
+lost its sibling-checkout step for kotidy in the process (see each repo's
+own `docs/COWORK.md` for its specific diff).
 
 `CI.yml` now has a `publish` job gated on `startsWith(github.ref,
 'refs/tags/v')` and `needs: test`, reading `GRADLE_PUBLISH_KEY`/
@@ -177,21 +175,24 @@ per-test visibility again, matching the account's verbose-test-output
 convention.
 
 `humane-kotlin`'s own `make test` confirmed the actual consumer path end to
-end on a real Mac: `pluginManagement { includeBuild("../kotidy") }` resolved
-correctly, `style = "fs"` rendered the real nested describe/context/it tree
-with no blank-line padding within a suite, and the reintroduced `Test
-Succeeded`/`Tests Passed: 0 failed, 0 skipped, 45 total (0.0570 seconds)`
-footer printed correctly at the end. `next-caltrain-kotlin`/`huck` and
-`make lint`/`make check` still need confirming.
+end on a real Mac, back when this was still a composite build:
+`pluginManagement { includeBuild("../kotidy") }` resolved correctly,
+`style = "fs"` rendered the real nested describe/context/it tree with no
+blank-line padding within a suite, and the reintroduced `Test Succeeded`/
+`Tests Passed: 0 failed, 0 skipped, 45 total (0.0570 seconds)` footer
+printed correctly at the end. All three consumers have since switched to
+the published `v0.1.0` plugin (see "Consumed by" below) and pushed green CI.
 
 ## Consumed by
 
 `next-caltrain-kotlin`, `humane-kotlin`, `huck` -- each replacing its own
-copy-pasted `TestListener` block with `pluginManagement { includeBuild(...) }`
-+ `plugins { id("com.netpress.kotidy") }`. See each repo's own
-`docs/COWORK.md` for the specific diff and what its `.editorconfig`'s
-`ktlint_standard_property-naming` override situation looks like afterward
-(`humane-kotlin`/`huck` no longer need it once their own copy of the
-SCREAMING_SNAKE_CASE constants is gone; `next-caltrain-kotlin` keeps its own
-override regardless, for an unrelated reason -- Swift-`let`-parity const
-naming in its actual app code).
+copy-pasted `TestListener` block with `id("com.netpress.kotidy") version
+"0.1.0"`, resolved via the `gradlePluginPortal()` already in each repo's
+`pluginManagement.repositories`. This started as a composite build
+(`pluginManagement { includeBuild("../kotidy") }`) before the Portal publish
+was approved; see each repo's own `docs/COWORK.md` for its specific diff and
+what its `.editorconfig`'s `ktlint_standard_property-naming` override
+situation looks like afterward (`humane-kotlin`/`huck` no longer need it once
+their own copy of the SCREAMING_SNAKE_CASE constants is gone;
+`next-caltrain-kotlin` keeps its own override regardless, for an unrelated
+reason -- Swift-`let`-parity const naming in its actual app code).

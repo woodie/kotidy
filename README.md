@@ -32,32 +32,8 @@ plugins {
 
 with `gradlePluginPortal()` in the consumer's `pluginManagement.repositories`.
 No sibling checkout needed -- `next-caltrain-kotlin`, `humane-kotlin`, and
-`huck` all consume it this way.
-
-Before the Portal publish was approved, `kotidy` was consumed as a Gradle
-composite build instead -- the same pattern `huck` still uses for
-`humane-kotlin`. That path still works if you'd rather build against a local
-checkout (e.g. while developing `kotidy` itself): check this repo out next
-to the consuming project (`~/workspace/kotidy`, `~/workspace/<your-repo>`),
-then in the consumer's `settings.gradle.kts`:
-
-```kotlin
-pluginManagement {
-    includeBuild("../kotidy")
-}
-```
-
-And in its `build.gradle.kts`, drop the `version` from the `plugins {}`
-block:
-
-```kotlin
-plugins {
-    id("com.netpress.kotidy")
-}
-```
-
-That's it -- every `Test` task in the project gets the tree renderer
-automatically, no further wiring needed.
+`huck` all consume it this way. That's it -- every `Test` task in the
+project gets the tree renderer automatically, no further wiring needed.
 
 ## Usage
 
@@ -149,6 +125,6 @@ make check   # ./gradlew ktlintFormat && ./gradlew clean check
 
 [`next-caltrain-kotlin`](https://github.com/woodie/next-caltrain-kotlin),
 [`humane-kotlin`](https://github.com/woodie/humane-kotlin), and
-[`huck`](https://github.com/woodie/huck) -- all three via the composite-build
-pattern above, replacing what used to be a byte-for-byte-copied
+[`huck`](https://github.com/woodie/huck) -- all three via the Portal
+install above, replacing what used to be a byte-for-byte-copied
 `TestListener` block in each repo's own `build.gradle.kts`.

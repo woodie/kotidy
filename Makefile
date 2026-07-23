@@ -1,4 +1,4 @@
-.PHONY: build test lint format check
+.PHONY: build test lint format check dogfood
 
 # ktlintFormat runs first in its own Gradle invocation, so it's fully done before
 # build/check runs ktlintCheck against the result -- matches humane-kotlin/huck's
@@ -32,3 +32,10 @@ format:
 check:
 	./gradlew ktlintFormat
 	./gradlew clean check
+
+# Renders kotidy's own test suite through the last-published Portal version
+# of itself (0.1.0), purely to capture a real docs/example.png -- not part of
+# build/test/check since it uses the published plugin, not whatever's
+# currently changed locally. See build.gradle.kts's "Dogfooding" comment.
+dogfood:
+	./gradlew clean test -Pdogfood

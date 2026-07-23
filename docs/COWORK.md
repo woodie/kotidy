@@ -126,22 +126,41 @@ from a real Mac (using the same key/secret, already in
 `~/.gradle/gradle.properties`); `v0.1.1` onward can rely on the tag push
 alone.
 
-## Why kotidy doesn't dogfood itself
+## Dogfooding kotidy against its own suite
 
 `gorderly`/`xctidy` both dogfood themselves against their own test suites
 (`make test` shells out to the compiled binary itself, formatting its own
-`go test`/`swift test` output in the same process). `kotidy` can't do the
-equivalent: it hooks Gradle's `TestListener` API directly rather than parsing
-text, which means applying it requires the plugin's own classes to already be
-compiled -- but `build.gradle.kts`'s `plugins {}` block resolves before this
-project's own `src/main/kotlin` is compiled, in the same build. There's no
-seam to apply `com.netpress.kotidy` to the build that produces
-`com.netpress.kotidy` itself. `Styles.kt` (the pure rendering logic, no
-Gradle API) is unit-tested directly instead; `KotidyPlugin.kt` (the
-`TestListener` wiring itself) isn't covered by an automated test here --
-verifying it means actually applying it in a consuming repo and reading real
-console output, which is what the three consumer repos' own `make test` runs
-now do.
+`go test`/`swift test` output in the same process). `kotidy` hooks Gradle's
+`TestListener` API directly rather than parsing text, so it can't apply
+*itself, mid-compile*, the same way -- `build.gradle.kts`'s `plugins {}`
+block resolves before this project's own `src/main/kotlin` is compiled, in
+the same build, so there's no seam to apply the classes currently being
+built to the build that's building them.
+
+That stopped being the whole story once `v0.1.0` was actually published to
+the Portal: applying the *already-published* `com.netpress.kotidy` to this
+same build is a completely separate, already-compiled artifact, with none of
+that chicken-and-egg problem -- exactly what `humane-kotlin`/`huck`/
+`next-caltrain-kotlin` already do to consume kotidy themselves. `make
+dogfood` (`./gradlew clean test -Pdogfood`) applies it conditionally,
+purely to capture a real `docs/example.png` of kotidy's own `Styles.kt`
+specs rendering through kotidy -- gated behind `-Pdogfood` rather than wired
+into `build`/`test`/`check`, since it renders using whatever the *last
+published* version does, not whatever's currently changed locally; letting
+regular `make test` quietly use stale rendering logic while a real change
+sits uncommitted would be misleading. `KotidyPlugin.kt`'s actual
+`TestListener` wiring is still ultimately verified end to end via a real
+consuming repo's own `make test`/CI, same as before -- `make dogfood`
+is for the screenshot, not a substitute for that.
+
+Also had to gate the plain `testLogging {}` block (further down in
+`build.gradle.kts`) behind `!project.hasProperty("dogfood")` -- without
+that, `make dogfood` produced Gradle's flat `ClassName > testName PASSED`
+lines *and* kotidy's own nested tree for the same test, interleaved, since
+both were firing on every test simultaneously. Confirmed clean afterward on
+a real Mac: `make dogfood` now shows only kotidy's own tree + footer, and
+`make test`/`build`/`check` are unaffected (`testLogging` still fires since
+`-Pdogfood` isn't set for those).
 
 ## Current status
 
@@ -165,8 +184,9 @@ existed because those were plain `val`s, not real `const val`s, so ktlint
 wanted to *lowercase* them instead).
 
 `make test` was also silent by design before a fix -- kotidy can't apply its
-own tree renderer to its own build (see "Why kotidy doesn't dogfood itself"
-above), and Gradle's default lifecycle logging prints nothing per test
+own tree renderer to its own build by default (see "Dogfooding kotidy
+against its own suite" above), and Gradle's default lifecycle logging
+prints nothing per test
 without `testLogging {}` configured, so the very first real `make test` run
 showed zero test output despite passing. Added `testLogging { events(...) }`
 to `build.gradle.kts` -- flat `ClassName > testName PASSED` lines now, not a

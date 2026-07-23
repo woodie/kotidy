@@ -108,17 +108,23 @@ for why.
 - `fv`'s per-leaf millisecond timing is only as precise as Gradle's own
   `TestResult` start/end timestamps -- sub-millisecond tests will round the
   same way `gorderly`'s own `-fv` timing does against `go test -v`'s output.
-- `kotidy` can't dogfood itself against its own test suite the way
-  `gorderly`/`xctidy` do (see `docs/COWORK.md`) -- its own `make test` output
-  uses Gradle's plain default renderer.
+- `make build`/`test`/`check` render kotidy's own suite with Gradle's plain
+  default output, not kotidy's own tree -- applying the plugin to its own
+  in-progress build isn't possible mid-compile. `make dogfood` applies
+  the last-published Portal version instead, just to capture
+  `docs/example.png` (see `docs/COWORK.md`, "Dogfooding kotidy against its
+  own suite").
 
 ## Development
 
 ```
-make build   # ./gradlew ktlintFormat && ./gradlew build -x test
-make test    # ./gradlew ktlintFormat && ./gradlew clean test
-make lint    # ./gradlew ktlintCheck
-make check   # ./gradlew ktlintFormat && ./gradlew clean check
+make build    # ./gradlew ktlintFormat && ./gradlew build -x test
+make test     # ./gradlew ktlintFormat && ./gradlew clean test
+make lint     # ./gradlew ktlintCheck
+make check    # ./gradlew ktlintFormat && ./gradlew clean check
+make dogfood  # ./gradlew clean test -Pdogfood -- renders this repo's own
+              # suite through the last-published Portal version, for
+              # docs/example.png only (see "Limitations" above)
 ```
 
 ## Consumed by

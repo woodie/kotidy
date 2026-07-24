@@ -87,7 +87,9 @@ it's tested directly with Kotest's `DescribeSpec`, using the same
 `describe`/`context`/`it` structure and a `subject`/`beforeEach` pattern for
 shared setup. `KotidyPlugin.kt` itself (the `TestListener` wiring) isn't
 unit-tested the same way -- verifying it means actually applying the plugin
-in a consuming project and reading real console output.
+in a consuming project and reading real console output. For how we write
+those Kotest specs more generally -- context nesting, the `subject` pattern,
+mocking and stubbing -- see [docs/FRAMEWORK.md](docs/FRAMEWORK.md).
 
 ## Limitations
 

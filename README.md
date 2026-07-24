@@ -13,12 +13,9 @@ no CLI wrapper or text-output parsing required.
 `kotidy` hooks Gradle's own `TestListener` API directly and walks the real
 nested `TestDescriptor.parent` chain Kotest's `DescribeSpec`/Gradle's JUnit
 Platform integration already carry, re-rendering it as a dense, deduped tree
-with no blank-line padding between `describe`/`context` groups. Unlike
-[`gorderly`](https://github.com/woodie/gorderly) (Go) and
-[`xctidy`](https://github.com/woodie/xctidy) (Swift), there's no raw test
+with no blank-line padding between `describe`/`context` groups. No raw test
 output to parse -- Kotest's own spec tree is already structured, so `kotidy`
-reads it straight from the Gradle API instead of reverse-engineering it from
-text.
+reads it straight from the Gradle API.
 
 ## Installation
 
@@ -30,10 +27,9 @@ plugins {
 }
 ```
 
-with `gradlePluginPortal()` in the consumer's `pluginManagement.repositories`.
-No sibling checkout needed -- `next-caltrain-kotlin`, `humane-kotlin`, and
-`huck` all consume it this way. That's it -- every `Test` task in the
-project gets the tree renderer automatically, no further wiring needed.
+with `gradlePluginPortal()` in your `pluginManagement.repositories`. That's
+it -- every `Test` task in the project gets the tree renderer
+automatically, no further wiring needed.
 
 ## Usage
 
@@ -43,10 +39,7 @@ kotidy {
 }
 ```
 
-Or override at runtime without touching `build.gradle.kts`, the same
-`-Dtestlogger.theme=`-style convention
-[`gradle-test-logger-plugin`](https://github.com/radarsh/gradle-test-logger-plugin)
-already established:
+Or override at runtime without touching `build.gradle.kts`:
 
 ```
 ./gradlew test -Dkotidy.style=fd
@@ -54,10 +47,7 @@ already established:
 
 ## Output styles
 
-Four named styles, matching the same shared surface
-[`gorderly`](https://github.com/woodie/gorderly#output-styles)/
-[`xctidy`](https://github.com/woodie/xctidy) already document -- picking
-`kotidy` up after either of those means the table below is already familiar.
+Four named styles:
 
 | `style` | Convention | Look |
 |---|---|---|
@@ -66,20 +56,19 @@ Four named styles, matching the same shared surface
 | `fs` | Mocha's spec format | Green `✔` + gray name, red `✗ name (FAILED - N)` |
 | `fv` | Vitest's own tree | Green `✓ name`, two-toned green `2ms`, red `× name`, dim gray `↓ name` |
 
-The first three end with the same xcbeautify-style verdict + counts footer
-`gorderly`/`xctidy` use; `fv` ends with Vitest's own
-`Test Files`/`Tests`/`Duration` footer instead, right-justified the same way.
-`Test Files` counts distinct top-level spec classes, `kotidy`'s equivalent of
-one Go package or one Swift test bundle.
+The first three end with a verdict + counts footer (`Test Succeeded`/
+`Tests Passed: 0 failed, 0 skipped, 45 total (0.057 seconds)`); `fv` ends
+with Vitest's own `Test Files`/`Tests`/`Duration` footer instead,
+right-justified the same way. `Test Files` counts distinct top-level spec
+classes.
 
 ## Why not an existing plugin
 
 Two real candidates exist on the Gradle side, and neither covers this gap:
 
 [`gradle-test-logger-plugin`](https://github.com/radarsh/gradle-test-logger-plugin)
-is the plugin `next-caltrain-kotlin`/`humane-kotlin`/`huck` moved off of to
-begin with. Its `mocha` theme gives real nested indentation with checkmarks,
-but inserts a blank line between every `describe`/`context` group with no
+gives real nested indentation with checkmarks via its `mocha` theme, but
+inserts a blank line between every `describe`/`context` group with no
 config flag to disable it -- confirmed still true as of its current README.
 It also has no RSpec-doc-style (no-glyph) or Vitest-tree equivalent.
 
@@ -94,26 +83,23 @@ switching, and swapping the test task itself is a bigger commitment than a
 ## Writing tests
 
 `kotidy`'s own formatting logic (`Styles.kt`) has no Gradle API dependency --
-it's tested directly with Kotest's `DescribeSpec`, the same
-`describe`/`context`/`it` shape and `subject`/`beforeEach` convention every
-other Kotlin repo in this account uses (see `humane-kotlin`'s own
-`docs/COWORK.md` "Writing tests here"). `KotidyPlugin.kt` itself (the
-`TestListener` wiring) isn't unit-tested the same way -- see `docs/COWORK.md`
-for why.
+it's tested directly with Kotest's `DescribeSpec`, using the same
+`describe`/`context`/`it` structure and a `subject`/`beforeEach` pattern for
+shared setup. `KotidyPlugin.kt` itself (the `TestListener` wiring) isn't
+unit-tested the same way -- verifying it means actually applying the plugin
+in a consuming project and reading real console output.
 
 ## Limitations
 
 - Tree order follows completion order, which matches declaration order for
   serial tests but can reorder under parallel test execution.
 - `fv`'s per-leaf millisecond timing is only as precise as Gradle's own
-  `TestResult` start/end timestamps -- sub-millisecond tests will round the
-  same way `gorderly`'s own `-fv` timing does against `go test -v`'s output.
+  `TestResult` start/end timestamps -- sub-millisecond tests will round.
 - `make build`/`test`/`check` render kotidy's own suite with Gradle's plain
   default output, not kotidy's own tree -- applying the plugin to its own
   in-progress build isn't possible mid-compile. `make dogfood` applies
   the last-published Portal version instead, just to capture
-  `docs/example.png` (see `docs/COWORK.md`, "Dogfooding kotidy against its
-  own suite").
+  `docs/example.png`.
 
 ## Development
 
@@ -126,11 +112,3 @@ make dogfood  # ./gradlew clean test -Pdogfood -- renders this repo's own
               # suite through the last-published Portal version, for
               # docs/example.png only (see "Limitations" above)
 ```
-
-## Consumed by
-
-[`next-caltrain-kotlin`](https://github.com/woodie/next-caltrain-kotlin),
-[`humane-kotlin`](https://github.com/woodie/humane-kotlin), and
-[`huck`](https://github.com/woodie/huck) -- all three via the Portal
-install above, replacing what used to be a byte-for-byte-copied
-`TestListener` block in each repo's own `build.gradle.kts`.

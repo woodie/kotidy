@@ -14,6 +14,18 @@ different tools -- see those repos' own `docs/FRAMEWORK.md` if you're
 working on that side instead. For `kotidy`'s own installation/usage, see
 [the README](../README.md); this doc is about what goes *inside* a spec.
 
+## Why not `expect()`?
+
+Kotlin already has a native idiom for this -- infix `shouldBe`/matchers --
+and the account-wide convention is to translate each language's own idiom
+rather than port one verbatim from wherever it started life; the only real
+`expect()`-syntax option, [Atrium](https://atrium-kt.org), is still alpha
+with a thin ecosystem, so there's nothing mature to plug in even if the
+shape appealed. Kotest's `shouldBe` stays the default for now, though
+RSpec's own move from `should` to `expect` and the JVM world's generally
+slow pace are reasons to look again someday rather than call the question
+permanently closed.
+
 ## `describe`/`context`, `beforeEach`/`afterEach`
 
 `DescribeSpec` gives `describe` and `context` -- `context` is Kotest's own

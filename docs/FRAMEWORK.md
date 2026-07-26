@@ -97,6 +97,68 @@ fix a different set of *options* (`includeSeconds`, `approximate`) baked
 into the same `subject` closure. Read that file if you want the pattern
 used with more than one independently-overridable input.
 
+### `justBeforeEach`: separate "what varies" from "the action under test"
+
+`beforeEach` alone means every `context` that needs the same act run
+against different inputs either duplicates that act in each context's own
+`beforeEach`, or hides it behind a `subject` closure called explicitly in
+every `it`. [`kwick`](https://github.com/woodie/kwick)'s `justBeforeEach`
+closes that gap: it runs after every `beforeEach` at every nesting level
+has finished, immediately before the `it`, so the action under test can
+live once at the parent level while each `context` only states what's
+different about its own inputs:
+
+```kotlin
+describe("#divide()") {
+    var numerator = 0
+    var denominator = 0
+    var result = 0
+    justBeforeEach { result = calculator.divide(numerator, denominator) }
+
+    context("dividing evenly") {
+        beforeEach { numerator = 10; denominator = 2 }
+        it("returns the quotient") { result shouldBe 5 }
+    }
+
+    context("dividing with a remainder") {
+        beforeEach { numerator = 7; denominator = 2 }
+        it("truncates toward zero") { result shouldBe 3 }
+    }
+}
+```
+
+Real usage assigns straight into a shared `var` inside `justBeforeEach`,
+the same way `beforeEach` does everywhere else in this doc -- not through
+a `subject := { ... }`-style closure called inside each `it`. That makes
+`justBeforeEach` the default over the closure-`subject` pattern above
+whenever a nested `context` needs to change an input the shared act
+depends on; reach for computed-once locals instead (below) when the value
+never varies per test. `next-caltrain-kotlin`'s `CaltrainServiceSpec.kt`
+(`#routes()`) and `GoodTimesSpec.kt` (`debugOverrideDotw`) are the real
+versions of this shape; `kwick`'s own `JustBeforeEachSpec.kt` is the
+dogfood suite for the hook itself.
+
+### `afterEach` for cleanup
+
+Anything a `beforeEach`/`justBeforeEach` sets as global or static state
+should get reset in a matching `afterEach`, so one context's override
+can't leak into a sibling context or a later spec:
+
+```kotlin
+context("when 'today' is fixed via debugOverrideDotw") {
+    var dotw = 0
+    justBeforeEach {
+        GoodTimes.debugOverrideDotw = dotw
+        gt = GoodTimes()
+    }
+    afterEach { GoodTimes.debugOverrideDotw = null }
+
+    // ...
+}
+```
+
+(`next-caltrain-kotlin`'s own `GoodTimesSpec.kt`.)
+
 ### Computed-once context locals vs. `subject`
 
 Kotest builds a spec's whole test tree in one pass -- the closure passed

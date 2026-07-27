@@ -21,10 +21,16 @@ and the account-wide convention is to translate each language's own idiom
 rather than port one verbatim from wherever it started life; the only real
 `expect()`-syntax option, [Atrium](https://atrium-kt.org), is still alpha
 with a thin ecosystem, so there's nothing mature to plug in even if the
-shape appealed. Kotest's `shouldBe` stays the default for now, though
-RSpec's own move from `should` to `expect` and the JVM world's generally
-slow pace are reasons to look again someday rather than call the question
-permanently closed.
+shape appealed. `kotidy` is a real investment in Kotest specifically, which
+makes this a different bet than [`gorderly`](https://github.com/woodie/gorderly)
+leaving Ginkgo behind -- `ginkgo-fd`'s own `-fd` output got merged upstream
+into Ginkgo itself, but it still felt like a separate world from plain
+`go test`, which is what pushed toward a framework-free renderer instead.
+That said, we're closer to language tourists in the Kotlin/JVM world than
+in Go, so this is offered as a data point, not a verdict: `shouldBe` stays
+the default for now, and it's worth a fresh look if the ecosystem ever
+moves the way RSpec did, but we're not well-placed to call that shift
+ourselves.
 
 ## `describe`/`context`, `beforeEach`/`afterEach`
 
@@ -158,6 +164,35 @@ context("when 'today' is fixed via debugOverrideDotw") {
 ```
 
 (`next-caltrain-kotlin`'s own `GoodTimesSpec.kt`.)
+
+### Skipping and focusing tests
+
+Kotest's `DescribeSpec` supports the same `x`/`f` prefix convention Quick
+uses -- `xdescribe`/`xcontext`/`xit` disable a group or single test (still
+listed in output, never run); `fdescribe`/`fcontext`/`fit` focus down to just
+that group or test, skipping everything else in the spec:
+
+```kotlin
+xdescribe("still needs a real fixture") {
+    // ...none of the code in this closure will run.
+}
+
+it("returns the cached value") { /* ... */ }
+xit("handles the timeout case") {
+    // ...this one test is skipped; siblings still run.
+}
+
+fdescribe("the bug we're chasing right now") {
+    // ...only this group (and other focused tests) run; everything else is skipped.
+}
+```
+
+Same caveat as Quick's own `fit`/`fdescribe`: focus only works on tests Kotest
+has already discovered by the time it evaluates the flag, so it doesn't
+reliably reach into a test nested under an unfocused parent -- put `f` on the
+level you actually want to isolate, not a leaf buried under a plain `describe`.
+See `gorderly`'s and `xctidy`'s own `docs/FRAMEWORK.md` for the Go/Swift
+equivalents.
 
 ### Computed-once context locals vs. `subject`
 

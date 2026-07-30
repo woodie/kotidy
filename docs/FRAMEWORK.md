@@ -132,7 +132,7 @@ a `subject := { ... }`-style closure called inside each `it`. That makes
 whenever a nested `context` needs to change an input the shared act
 depends on; reach for computed-once locals instead (below) when the value
 never varies per test. `next-caltrain-kotlin`'s `CaltrainServiceSpec.kt`
-(`#routes()`) and `GoodTimesSpec.kt` (`debugOverrideDotw`) are the real
+(`#routes()`) and `GoodTimesSpec.kt` (`GoodTimes.seeded`) are the real
 versions of this shape; `kwick`'s own `JustBeforeEachSpec.kt` is the
 dogfood suite for the hook itself.
 
@@ -140,19 +140,28 @@ dogfood suite for the hook itself.
 
 Anything a `beforeEach`/`justBeforeEach` sets as global or static state
 should get reset in a matching `afterEach`, so one context's override
-can't leak into a sibling context or a later spec:
+can't leak into a sibling context or a later spec. Prefer a factory that
+takes the value directly when the caller constructs the object itself --
+nothing global, nothing to reset -- and reserve the global-plus-`afterEach`
+shape for cases where the code under test builds that object internally,
+with no seam to pass a value through:
 
 ```kotlin
-context("when 'today' is fixed via debugOverrideDotw") {
-    var dotw = 0
-    justBeforeEach { GoodTimes.debugOverrideDotw = dotw; gt = GoodTimes() }
-    afterEach { GoodTimes.debugOverrideDotw = null }
-
-    // ...
+// TripViewModel constructs GoodTimes() internally, so the spec has no way
+// to hand it a seeded value directly -- only the global fallback reaches it.
+justBeforeEach {
+    GoodTimes.dotwSeed = dotw
+    GoodTimes.minutesSeed = mins
+}
+afterEach {
+    GoodTimes.dotwSeed = null
+    GoodTimes.minutesSeed = null
 }
 ```
 
-(`next-caltrain-kotlin`'s own `GoodTimesSpec.kt`.)
+(`next-caltrain-kotlin`'s own `TripViewModelSpec.kt`.) Contrast with
+`GoodTimesSpec.kt`, which constructs `GoodTimes` itself and so calls
+`GoodTimes.seeded(dotw = dotw)` directly -- no global, no `afterEach`.
 
 ### Skipping and focusing tests
 

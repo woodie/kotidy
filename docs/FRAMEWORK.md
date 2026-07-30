@@ -17,20 +17,12 @@ working on that side instead. For `kotidy`'s own installation/usage, see
 ## Why not `expect()`?
 
 Kotlin already has a native idiom for this -- infix `shouldBe`/matchers --
-and the account-wide convention is to translate each language's own idiom
-rather than port one verbatim from wherever it started life; the only real
-`expect()`-syntax option, [Atrium](https://atrium-kt.org), is still alpha
-with a thin ecosystem, so there's nothing mature to plug in even if the
-shape appealed. `kotidy` is a real investment in Kotest specifically, which
-makes this a different bet than [`gorderly`](https://github.com/woodie/gorderly)
-leaving Ginkgo behind -- `ginkgo-fd`'s own `-fd` output got merged upstream
-into Ginkgo itself, but it still felt like a separate world from plain
-`go test`, which is what pushed toward a framework-free renderer instead.
-That said, we're closer to language tourists in the Kotlin/JVM world than
-in Go, so this is offered as a data point, not a verdict: `shouldBe` stays
-the default for now, and it's worth a fresh look if the ecosystem ever
-moves the way RSpec did, but we're not well-placed to call that shift
-ourselves.
+and the only real `expect()`-syntax option, [Atrium](https://atrium-kt.org),
+is still alpha with a thin ecosystem. The specific bugs RSpec's `expect`
+fixed in Ruby (a monkey-patched `.should` breaking on proxies/delegators,
+global namespace pollution) don't apply here either, since Kotlin's
+`shouldBe` is a statically-resolved extension function, not a runtime patch
+onto `Any`. `shouldBe` stays the default.
 
 ## `describe`/`context`, `beforeEach`/`afterEach`
 

@@ -1,5 +1,6 @@
 package com.netpress.kotidy
 
+import com.netpress.kwick.justBeforeEach
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 
@@ -15,13 +16,14 @@ class StylesSpec :
 
         describe("colorizePass") {
             lateinit var style: Style
-            val subject = { colorizePass(style, "does a thing", 0.5, plain) }
+            lateinit var result: String
+            justBeforeEach { result = colorizePass(style, "does a thing", 0.5, plain) }
 
             context("classic") {
                 beforeEach { style = Style.CLASSIC }
 
                 it("shows a checkmark glyph and the elapsed seconds") {
-                    subject() shouldBe "✔ does a thing (0.5000 seconds)"
+                    result shouldBe "✔ does a thing (0.5000 seconds)"
                 }
             }
 
@@ -29,7 +31,7 @@ class StylesSpec :
                 beforeEach { style = Style.FD }
 
                 it("shows only the plain name, no glyph") {
-                    subject() shouldBe "does a thing"
+                    result shouldBe "does a thing"
                 }
             }
 
@@ -37,7 +39,7 @@ class StylesSpec :
                 beforeEach { style = Style.FS }
 
                 it("shows a checkmark glyph and the name, no timing") {
-                    subject() shouldBe "✔ does a thing"
+                    result shouldBe "✔ does a thing"
                 }
             }
 
@@ -45,20 +47,21 @@ class StylesSpec :
                 beforeEach { style = Style.FV }
 
                 it("shows a checkmark glyph and millisecond timing") {
-                    subject() shouldBe "✓ does a thing 500ms"
+                    result shouldBe "✓ does a thing 500ms"
                 }
             }
         }
 
         describe("colorizeFail") {
             lateinit var style: Style
-            val subject = { colorizeFail(style, "does a thing", 0.5, 1, plain) }
+            lateinit var result: String
+            justBeforeEach { result = colorizeFail(style, "does a thing", 0.5, 1, plain) }
 
             context("classic") {
                 beforeEach { style = Style.CLASSIC }
 
                 it("shows a cross glyph, failure number, and elapsed seconds") {
-                    subject() shouldBe "✖ does a thing (FAILED - 1) (0.5000 seconds)"
+                    result shouldBe "✖ does a thing (FAILED - 1) (0.5000 seconds)"
                 }
             }
 
@@ -66,7 +69,7 @@ class StylesSpec :
                 beforeEach { style = Style.FD }
 
                 it("shows the name and failure number, no glyph") {
-                    subject() shouldBe "does a thing (FAILED - 1)"
+                    result shouldBe "does a thing (FAILED - 1)"
                 }
             }
 
@@ -74,7 +77,7 @@ class StylesSpec :
                 beforeEach { style = Style.FS }
 
                 it("shows an x glyph, name, and failure number") {
-                    subject() shouldBe "✗ does a thing (FAILED - 1)"
+                    result shouldBe "✗ does a thing (FAILED - 1)"
                 }
             }
 
@@ -82,20 +85,21 @@ class StylesSpec :
                 beforeEach { style = Style.FV }
 
                 it("shows an x glyph and millisecond timing, no failure number") {
-                    subject() shouldBe "× does a thing 500ms"
+                    result shouldBe "× does a thing 500ms"
                 }
             }
         }
 
         describe("colorizeSkip") {
             lateinit var style: Style
-            val subject = { colorizeSkip(style, "does a thing", 0.5, plain) }
+            lateinit var result: String
+            justBeforeEach { result = colorizeSkip(style, "does a thing", 0.5, plain) }
 
             context("classic") {
                 beforeEach { style = Style.CLASSIC }
 
                 it("shows a circle-slash glyph and elapsed seconds") {
-                    subject() shouldBe "⊘ does a thing (0.5000 seconds)"
+                    result shouldBe "⊘ does a thing (0.5000 seconds)"
                 }
             }
 
@@ -103,7 +107,7 @@ class StylesSpec :
                 beforeEach { style = Style.FD }
 
                 it("shows the name marked PENDING, no glyph") {
-                    subject() shouldBe "does a thing (PENDING)"
+                    result shouldBe "does a thing (PENDING)"
                 }
             }
 
@@ -111,7 +115,7 @@ class StylesSpec :
                 beforeEach { style = Style.FS }
 
                 it("shows a dash and the name marked SKIPPED") {
-                    subject() shouldBe "- does a thing (SKIPPED)"
+                    result shouldBe "- does a thing (SKIPPED)"
                 }
             }
 
@@ -119,7 +123,7 @@ class StylesSpec :
                 beforeEach { style = Style.FV }
 
                 it("shows a down-arrow glyph, no timing") {
-                    subject() shouldBe "↓ does a thing"
+                    result shouldBe "↓ does a thing"
                 }
             }
         }

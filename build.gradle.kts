@@ -31,6 +31,9 @@ kotlin {
 dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    // Provides justBeforeEach -- see kwick's own README "Setup" and
+    // ProjectConfig.kt for the required JustBeforeEachExtension registration.
+    testImplementation("com.netpress:kwick:0.1.2")
 }
 
 gradlePlugin {

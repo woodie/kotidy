@@ -3,10 +3,14 @@
 How we structure Kotlin tests using [Kotest](https://kotest.io)'s
 `DescribeSpec` -- context/lifecycle conventions and mocking/stubbing
 patterns, using `describe`/`context`/`it` structure and `shouldBe`/matcher
-assertions. Examples below use generic domain types (`Calculator`,
-`FileSize`, `TripPlanner`, `SyncModel`, ...) rather than any one project's
-real code, so the pattern reads the same regardless of what you're
-actually testing. The Go side of this pairing
+assertions. Structural examples below use
+[`humane-kotlin`](https://github.com/woodie/humane-kotlin)'s real
+`Humane.humanSize`/`Humane.distanceInTime` -- small, dependency-free, and
+already dogfooding every pattern this doc describes, so there's a real
+suite to cross-check against rather than a hypothetical. Mocking/stubbing
+examples further down still use generic domain types (`Calculator`,
+`TripPlanner`, `SyncModel`, ...) where the scenario needs more moving
+parts than a pure formatting function has. The Go side of this pairing
 ([`gorderly`](https://github.com/woodie/gorderly),
 [`expect`](https://github.com/woodie/expect)) and the Swift side
 ([`xctidy`](https://github.com/woodie/xctidy)) follow the same shape with
@@ -34,15 +38,16 @@ inward, same as any other xUnit-style `before` hook -- there's no separate
 "shared context" mechanism to learn beyond where you place the closure:
 
 ```kotlin
-describe("FileSize.format") {
+describe("Humane.humanSize") {
     var bytes = 0L
-    val subject = { FileSize.format(bytes) }
+    lateinit var result: String
+    justBeforeEach { result = Humane.humanSize(bytes) }
 
     context("with 0 bytes") {
         beforeEach { bytes = 0 }
 
         it("formats as Zero KB") {
-            subject() shouldBe "Zero KB"
+            result shouldBe "Zero KB"
         }
     }
 
@@ -50,47 +55,15 @@ describe("FileSize.format") {
         beforeEach { bytes = 5_240_000_000 }
 
         it("keeps 2 decimal places at 3 significant figures (not truncated to 1)") {
-            subject() shouldBe "5.24 GB"
+            result shouldBe "5.24 GB"
         }
     }
 }
 ```
 
-### The "subject" pattern
-
-Kotlin has no built-in `subject`/`let` keyword, but the idea translates
-directly: declare whatever it depends on as a `var` in the enclosing
-`describe`, define `subject` as a closure over it, and let each `context`'s
-own `beforeEach` set that `var` to whatever it needs. `subject` doesn't run
-until called, so `subject()` inside every `it` always reflects whichever
-`beforeEach` most recently ran:
-
-```kotlin
-describe("colorizePass") {
-    lateinit var style: Style
-    val subject = { colorizePass(style, "does a thing", 0.5, plain) }
-
-    context("classic") {
-        beforeEach { style = Style.CLASSIC }
-        it("shows a checkmark glyph and the elapsed seconds") {
-            subject() shouldBe "✔ does a thing (0.5000 seconds)"
-        }
-    }
-
-    context("fd") {
-        beforeEach { style = Style.FD }
-        it("shows only the plain name, no glyph") {
-            subject() shouldBe "does a thing"
-        }
-    }
-}
-```
-
-(`kotidy`'s own `StylesSpec.kt`.) The same shape extends further when a
-`subject` closes over one input shared by a dozen sibling `context`s,
-nested under outer `describe` blocks that each fix a different set of
-*options* baked into the same `subject` closure -- worth reaching for once
-more than one independently-overridable input needs covering.
+(This example already uses `justBeforeEach`, explained just below --
+`kotidy`'s own tests didn't always look like this; see "The subject
+pattern" further down for what it replaced.)
 
 ### `justBeforeEach`: separate "what varies" from "the action under test"
 
@@ -125,11 +98,58 @@ describe("#divide()") {
 Real usage assigns straight into a shared `var` inside `justBeforeEach`,
 the same way `beforeEach` does everywhere else in this doc -- not through
 a `subject := { ... }`-style closure called inside each `it`. That makes
-`justBeforeEach` the default over the closure-`subject` pattern above
+`justBeforeEach` the default over the closure-`subject` pattern below
 whenever a nested `context` needs to change an input the shared act
-depends on; reach for computed-once locals instead (below) when the value
-never varies per test. `kwick`'s own `JustBeforeEachSpec.kt` is the
-dogfood suite for the hook itself.
+depends on; reach for computed-once locals instead (further down) when
+the value never varies per test. `kwick`'s own `JustBeforeEachSpec.kt` is
+the dogfood suite for the hook itself. Requires [`kwick`](https://github.com/woodie/kwick)
+as a test dependency plus `JustBeforeEachExtension` registered in
+`ProjectConfig` -- see `kwick`'s own README "Setup".
+
+### The "subject" pattern -- now the narrower case, not the default
+
+Kotlin has no built-in `subject`/`let` keyword, but the idea translates
+directly: declare whatever it depends on as a `var` in the enclosing
+`describe`, define `subject` as a closure over it, and let each `context`'s
+own `beforeEach` set that `var` to whatever it needs. `subject` doesn't run
+until called, so `subject()` inside every `it` always reflects whichever
+`beforeEach` most recently ran.
+
+`kotidy`'s own `StylesSpec.kt` used to be this doc's example of the
+pattern (`colorizePass`/`colorizeFail`/`colorizeSkip`, one input, one
+`context` each, `subject()` called once per `it`) -- exactly the shape
+`justBeforeEach` above now covers directly, so all three converted.
+Reserve the closure form instead for the case `justBeforeEach` doesn't
+fit: an `it` that needs to invoke the action more than once, or with a
+locally-tweaked argument, rather than once per `it` with fixed inputs:
+
+```kotlin
+describe("Humane.humanSize") {
+    var bytes = 0L
+    val humanSize = { Humane.humanSize(bytes) }
+
+    context("with a gigabyte-scale value") {
+        beforeEach { bytes = 5_240_000_000 }
+
+        it("is consistent across repeated calls") {
+            humanSize() shouldBe humanSize()
+        }
+
+        it("rounds a locally-tweaked, slightly larger byte count the same way") {
+            bytes += 1
+            humanSize() shouldBe "5.24 GB"
+        }
+    }
+}
+```
+
+Both `it`s above call `humanSize()` more than once, or override an input
+inline for one call only -- `justBeforeEach` computes its result exactly
+once, immediately before the `it` body starts, so it can't express either
+of those. Everywhere an `it` reads the action's result exactly once (the
+far more common case -- see `Humane.humanSize`/`Humane.distanceInTime`
+above), `justBeforeEach` is the default; this closure form is what's left
+over.
 
 ### `afterEach` for cleanup
 
@@ -212,8 +232,8 @@ describe("#routes()") {
 
 This is safe because `routes` is deterministic and never mutated by any
 `it` -- there's nothing for a later test to accidentally see stale. Reach
-for `subject`/`beforeEach` instead as soon as a nested `context` needs to
-*change* an input (see the `FileSize`/`colorizePass` examples above) --
+for `justBeforeEach`/`beforeEach` instead as soon as a nested `context`
+needs to *change* an input (see the `Humane.humanSize` examples above) --
 that's what reruns fresh per test rather than once per spec.
 
 ## Mocking and stubbing

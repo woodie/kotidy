@@ -1,12 +1,12 @@
 # Writing tests with Kotest's `DescribeSpec`
 
-How we structure Kotlin tests across these projects (`kotidy` itself,
-[`humane-kotlin`](https://github.com/woodie/humane-kotlin),
-[`huck`](https://github.com/woodie/huck),
-[`next-caltrain-kotlin`](https://github.com/woodie/next-caltrain-kotlin)) --
-context/lifecycle conventions and mocking/stubbing patterns, using
-[Kotest](https://kotest.io)'s `DescribeSpec` for `describe`/`context`/`it`
-structure and `shouldBe`/matcher assertions. The Go side of this pairing
+How we structure Kotlin tests using [Kotest](https://kotest.io)'s
+`DescribeSpec` -- context/lifecycle conventions and mocking/stubbing
+patterns, using `describe`/`context`/`it` structure and `shouldBe`/matcher
+assertions. Examples below use generic domain types (`Calculator`,
+`FileSize`, `TripPlanner`, `SyncModel`, ...) rather than any one project's
+real code, so the pattern reads the same regardless of what you're
+actually testing. The Go side of this pairing
 ([`gorderly`](https://github.com/woodie/gorderly),
 [`expect`](https://github.com/woodie/expect)) and the Swift side
 ([`xctidy`](https://github.com/woodie/xctidy)) follow the same shape with
@@ -34,14 +34,14 @@ inward, same as any other xUnit-style `before` hook -- there's no separate
 "shared context" mechanism to learn beyond where you place the closure:
 
 ```kotlin
-describe("Humane.humanSize") {
+describe("FileSize.format") {
     var bytes = 0L
-    val subject = { Humane.humanSize(bytes) }
+    val subject = { FileSize.format(bytes) }
 
     context("with 0 bytes") {
         beforeEach { bytes = 0 }
 
-        it("formats as Zero KB, matching ByteCountFormatter's own wording") {
+        it("formats as Zero KB") {
             subject() shouldBe "Zero KB"
         }
     }
@@ -55,8 +55,6 @@ describe("Humane.humanSize") {
     }
 }
 ```
-
-(`humane-kotlin`'s own `HumanSizeSpec.kt`.)
 
 ### The "subject" pattern
 
@@ -88,12 +86,11 @@ describe("colorizePass") {
 }
 ```
 
-(`kotidy`'s own `StylesSpec.kt`.) `humane-kotlin`'s `DistanceInTimeSpec.kt`
-takes this further -- a `subject` closing over one input (`at`) shared by
-a dozen sibling `context`s, nested under outer `describe` blocks that each
-fix a different set of *options* (`includeSeconds`, `approximate`) baked
-into the same `subject` closure. Read that file if you want the pattern
-used with more than one independently-overridable input.
+(`kotidy`'s own `StylesSpec.kt`.) The same shape extends further when a
+`subject` closes over one input shared by a dozen sibling `context`s,
+nested under outer `describe` blocks that each fix a different set of
+*options* baked into the same `subject` closure -- worth reaching for once
+more than one independently-overridable input needs covering.
 
 ### `justBeforeEach`: separate "what varies" from "the action under test"
 
@@ -131,9 +128,7 @@ a `subject := { ... }`-style closure called inside each `it`. That makes
 `justBeforeEach` the default over the closure-`subject` pattern above
 whenever a nested `context` needs to change an input the shared act
 depends on; reach for computed-once locals instead (below) when the value
-never varies per test. `next-caltrain-kotlin`'s `CaltrainServiceSpec.kt`
-(`#routes()`) and `GoodTimesSpec.kt` (`GoodTimes.seeded`) are the real
-versions of this shape; `kwick`'s own `JustBeforeEachSpec.kt` is the
+never varies per test. `kwick`'s own `JustBeforeEachSpec.kt` is the
 dogfood suite for the hook itself.
 
 ### `afterEach` for cleanup
@@ -147,21 +142,21 @@ shape for cases where the code under test builds that object internally,
 with no seam to pass a value through:
 
 ```kotlin
-// TripViewModel constructs GoodTimes() internally, so the spec has no way
+// ViewModel constructs Clock() internally, so the spec has no way
 // to hand it a seeded value directly -- only the global fallback reaches it.
 justBeforeEach {
-    GoodTimes.dotwSeed = dotw
-    GoodTimes.minutesSeed = mins
+    Clock.daySeed = day
+    Clock.minuteSeed = minute
 }
 afterEach {
-    GoodTimes.dotwSeed = null
-    GoodTimes.minutesSeed = null
+    Clock.daySeed = null
+    Clock.minuteSeed = null
 }
 ```
 
-(`next-caltrain-kotlin`'s own `TripViewModelSpec.kt`.) Contrast with
-`GoodTimesSpec.kt`, which constructs `GoodTimes` itself and so calls
-`GoodTimes.seeded(dotw = dotw)` directly -- no global, no `afterEach`.
+Contrast with a spec that constructs the same type itself instead, which
+can call a seeded factory directly (`Clock.seeded(day = day)`) -- no
+global, no `afterEach` needed.
 
 ### Skipping and focusing tests
 
@@ -203,24 +198,23 @@ that context:
 
 ```kotlin
 describe("#routes()") {
-    val schedule = SpecFixtures.weekdayOnlySchedule()
-    val service = CaltrainService(schedule)
+    val schedule = Fixtures.weekdaySchedule()
+    val planner = TripPlanner(schedule)
 
-    context("for a direct electric trip (San Francisco to San Jose Diridon)") {
-        val routes = service.routes(SpecFixtures.sanFrancisco, SpecFixtures.sanJoseDiridon, ScheduleType.WEEKDAY)
+    context("for a direct trip between two stations") {
+        val routes = planner.routes(Fixtures.stationA, Fixtures.stationB, ScheduleType.WEEKDAY)
 
         it("returns one direct trip") { routes shouldHaveSize 1 }
-        it("uses the electric southbound train") { routes.first().id shouldBe SpecFixtures.electricSouthTrainId }
+        it("uses the expected route") { routes.first().id shouldBe Fixtures.expectedRouteId }
     }
 }
 ```
 
-(`next-caltrain-kotlin`'s `CaltrainServiceSpec.kt`.) This is safe because
-`routes` is deterministic and never mutated by any `it` -- there's nothing
-for a later test to accidentally see stale. Reach for `subject`/
-`beforeEach` instead as soon as a nested `context` needs to *change* an
-input (see `HumanSizeSpec`/`StylesSpec` above) -- that's what reruns fresh
-per test rather than once per spec.
+This is safe because `routes` is deterministic and never mutated by any
+`it` -- there's nothing for a later test to accidentally see stale. Reach
+for `subject`/`beforeEach` instead as soon as a nested `context` needs to
+*change* an input (see the `FileSize`/`colorizePass` examples above) --
+that's what reruns fresh per test rather than once per spec.
 
 ## Mocking and stubbing
 
@@ -232,25 +226,24 @@ seam is the default argument, not a mutable var anything else could reach
 into mid-test:
 
 ```kotlin
-class AppModel(
-    private val preferences: Preferences = Preferences.userNodeForPackage(AppModel::class.java),
-    private val clientFactory: (URI) -> ScanFetching = { ScanClient(it) },
+class SyncModel(
+    private val preferences: Preferences = Preferences.userNodeForPackage(SyncModel::class.java),
+    private val clientFactory: (URI) -> FileFetching = { FileClient(it) },
 ) { /* ... */ }
 ```
 
 A spec just passes a different factory:
 
 ```kotlin
-val model = AppModel(
+val model = SyncModel(
     preferences = scopedPreferences(),
-    clientFactory = { FakeScanFetching { fixtureScans } },
+    clientFactory = { FakeFileFetching { fixtureFiles } },
 )
 ```
 
-(`huck`'s own `AppModel.kt`/`AppModelSpec.kt`.) `connect()` never knows or
-cares whether `clientFactory` built a real `ScanClient` or a fake --
-production code is unchanged, only what a given `AppModel` instance was
-constructed with.
+`connect()` never knows or cares whether `clientFactory` built a real
+`FileClient` or a fake -- production code is unchanged, only what a given
+`SyncModel` instance was constructed with.
 
 ### Scoping real state instead of faking it
 
@@ -260,14 +253,13 @@ production or with every other test:
 
 ```kotlin
 fun scopedPreferences(): Preferences =
-    Preferences.userRoot().node("com/netpress/huck/test/${UUID.randomUUID()}")
+    Preferences.userRoot().node("com/example/app/test/${UUID.randomUUID()}")
 ```
 
-(`huck`'s own `AppModelSpec.kt` -- a fresh, randomly-named
-`java.util.prefs.Preferences` node per call, instead of the shared user
-default node, so tests never read or write real state on the machine
-running them. The same instinct as Go's `t.TempDir()`: real API, disposable
-instance.)
+A fresh, randomly-named `java.util.prefs.Preferences` node per call,
+instead of the shared user default node, so tests never read or write real
+state on the machine running them. The same instinct as Go's
+`t.TempDir()`: real API, disposable instance.
 
 ### Test doubles for a real interface
 
@@ -278,36 +270,34 @@ defaulting to `null` so an un-configured call fails loudly instead of
 returning a misleadingly-empty default:
 
 ```kotlin
-class FakeScanHttpClient(
+class FakeFileHttpClient(
     var getHandler: ((URI) -> HttpResult)? = null,
     var downloadHandler: ((URI) -> DownloadResult)? = null,
     var deleteHandler: ((URI) -> HttpResult)? = null,
-) : ScanHttpClient {
+) : FileHttpClient {
     override fun get(url: URI): HttpResult =
-        getHandler?.invoke(url) ?: error("FakeScanHttpClient.get: no getHandler set")
+        getHandler?.invoke(url) ?: error("FakeFileHttpClient.get: no getHandler set")
     override fun download(url: URI): DownloadResult =
-        downloadHandler?.invoke(url) ?: error("FakeScanHttpClient.download: no downloadHandler set")
+        downloadHandler?.invoke(url) ?: error("FakeFileHttpClient.download: no downloadHandler set")
     override fun delete(url: URI): HttpResult =
-        deleteHandler?.invoke(url) ?: error("FakeScanHttpClient.delete: no deleteHandler set")
+        deleteHandler?.invoke(url) ?: error("FakeFileHttpClient.delete: no deleteHandler set")
 }
 ```
 
 Each test then only wires up the handler its own scenario needs:
 
 ```kotlin
-val fakeHttp = FakeScanHttpClient(getHandler = { url ->
+val fakeHttp = FakeFileHttpClient(getHandler = { url ->
     requestedUrl = url
     HttpResult(200, body)
 })
 ```
 
-(`huck`'s own `ScanClientSpec.kt`/`ScanHttpClient.kt`.) A `suspend`
-interface with a method genuinely not ported/exercised yet can commit to
-that in the fake itself rather than a per-test lambda -- `huck`'s
-`FakeScanFetching` (in `AppModelSpec.kt`) hardcodes
-`throw NotImplementedError(...)` for `cachedFile`/`save`, since no spec in
-that file exercises either yet, while `fetchScans`/`delete` still take a
-configurable lambda.
+A `suspend` interface with a method genuinely not exercised yet can commit
+to that in the fake itself rather than a per-test lambda -- hardcoding
+`throw NotImplementedError(...)` for a method no spec in that file
+exercises, while the methods actually under test still take a configurable
+lambda.
 
 ### `mockk` for platform types you don't own
 
@@ -317,18 +307,16 @@ interface this codebase defines (Android's `Context`, for example),
 hand-rolled fake against:
 
 ```kotlin
-fun makeViewModel(schedule: Schedule, origin: String, destination: String): TripViewModel =
-    TripViewModel(schedule, mockk<Context>(relaxed = true)).apply {
-        setOrigin(origin)
-        setDestination(destination)
+fun makeViewModel(config: Config): SettingsViewModel =
+    SettingsViewModel(config, mockk<Context>(relaxed = true)).apply {
         refresh()
     }
 ```
 
-(`next-caltrain-kotlin`'s `TripViewModelSpec.kt`.) `relaxed = true` auto-stubs
-every method with a sane default -- the test only cares that `TripViewModel`
-reads a couple of preference values in `init {}`, not full `Context`
-behavior, so nothing else needs a real answer.
+`relaxed = true` auto-stubs every method with a sane default -- the test
+only cares that `SettingsViewModel` reads a couple of preference values in
+`init {}`, not full `Context` behavior, so nothing else needs a real
+answer.
 
 ### Coroutines: `runTest` and virtual time
 
@@ -337,10 +325,10 @@ For `suspend fun`s, [`kotlinx-coroutines-test`](https://github.com/Kotlin/kotlin
 duration delay in production code doesn't actually slow the suite down:
 
 ```kotlin
-it("stores the scans, marks hasEverConnected, and persists the host") {
+it("stores the files, marks hasEverConnected, and persists the host") {
     runTest {
-        val model = AppModel(preferences = preferences, clientFactory = { FakeScanFetching { fixtureScans } })
-        model.hostInput = "scans.example.com"
+        val model = SyncModel(preferences = preferences, clientFactory = { FakeFileFetching { fixtureFiles } })
+        model.hostInput = "files.example.com"
 
         model.connect()
 
@@ -349,14 +337,13 @@ it("stores the scans, marks hasEverConnected, and persists the host") {
 }
 ```
 
-(`huck`'s own `AppModelSpec.kt` -- `connect()`'s real 2-second minimum-
-connecting-duration floor doesn't add 2 real seconds per test.) Mixing
-`beforeEach` with suspend setup isn't wired up in this account yet --
-`ScanClientSpec.kt`'s own comment notes it needs a coroutine-test listener
-extension none of these projects currently configure -- so suspend-heavy
-specs do their own setup inline inside each `it`'s own `runTest` block
-rather than relying on `beforeEach`, even where a plain (non-suspend) spec
-in the same project uses `beforeEach` freely.
+(`connect()`'s real 2-second minimum-connecting-duration floor doesn't add
+2 real seconds per test.) Mixing `beforeEach` with suspend setup needs a
+coroutine-test listener extension most projects don't configure by
+default, so suspend-heavy specs often do their own setup inline inside
+each `it`'s own `runTest` block rather than relying on `beforeEach`, even
+where a plain (non-suspend) spec in the same project uses `beforeEach`
+freely.
 
 A spec exercising a `ViewModel` that swaps Kotlin's `Dispatchers.Main` needs
 that swap scoped to the whole spec, not per test, via `beforeSpec`/
@@ -368,27 +355,23 @@ beforeSpec { Dispatchers.setMain(testDispatcher) }
 afterSpec { Dispatchers.resetMain() }
 ```
 
-(`next-caltrain-kotlin`'s `TripViewModelSpec.kt`.)
-
 ### Regression tests double as documentation
 
 When a spec exists specifically to pin down a bug that already happened,
 say so in a comment right at the setup, not just in the commit message:
 
 ```kotlin
-context("when a same-named file is cached but its size doesn't match scan.size") {
-    // Regression test for the stale-cache bug ScanClient.cachedFile fixed.
-    it("re-downloads from scan.path instead of trusting the stale cache, overwriting it") {
+context("when a same-named file is cached but its size doesn't match the expected size") {
+    // Regression test for the stale-cache bug the fetch client fixed.
+    it("re-downloads from the source instead of trusting the stale cache, overwriting it") {
         // ...
     }
 }
 ```
 
-(`huck`'s `ScanClientSpec.kt`; `next-caltrain-kotlin`'s
-`TripViewModelSpec.kt` has the same shape for its "manual selection via
-setOffset" regression coverage.) Anyone reading the spec later knows
-immediately this isn't a hypothetical edge case -- removing it silently
-would reintroduce a real, previously-shipped bug.
+Anyone reading the spec later knows immediately this isn't a hypothetical
+edge case -- removing it silently would reintroduce a real, previously-
+shipped bug.
 
 ## `kotidy`'s own tests
 

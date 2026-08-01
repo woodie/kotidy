@@ -7,15 +7,10 @@
 
 ![Example Screenshot](docs/example.png)
 
-RSpec/Mocha/Vitest-style output for Kotest's `DescribeSpec`, via a real
-Gradle plugin -- no CLI wrapper or text-output parsing required.
-
-`kotidy` hooks Gradle's own `TestListener` API directly and walks the real
-nested `TestDescriptor.parent` chain Kotest's `DescribeSpec`/Gradle's JUnit
-Platform integration already carry, re-rendering it as a dense, deduped tree
-with no blank-line padding between `describe`/`context` groups. No raw test
-output to parse -- Kotest's own spec tree is already structured, so `kotidy`
-reads it straight from the Gradle API.
+RSpec/Mocha/Vitest-style output for Kotlin that works with Kotest's
+`DescribeSpec` by integrating as a real Gradle plugin. It hooks Gradle's
+own `TestListener` API directly, so every `Test` task gets the tree
+renderer automatically.
 
 ## Installation
 

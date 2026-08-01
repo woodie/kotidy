@@ -18,6 +18,14 @@ different tools -- see those repos' own `docs/FRAMEWORK.md` if you're
 working on that side instead. For `kotidy`'s own installation/usage, see
 [the README](../README.md); this doc is about what goes *inside* a spec.
 
+## Keep descriptions concise
+
+`describe`/`context`/`it` strings render as literal lines in the tree --
+treat them like any other line of code meant to be read at a glance. State
+only what's true, in the fewest words that still read like a sentence;
+leave out rationale, comparisons to other tools, or anything that belongs
+in a doc or comment instead.
+
 ## Why not `expect()`?
 
 Kotlin already has a native idiom for this -- infix `shouldBe`/matchers --

@@ -7,8 +7,8 @@
 
 ![Example Screenshot](docs/example.png)
 
-RSpec style output for Kotest's `DescribeSpec`, via a real Gradle plugin --
-no CLI wrapper or text-output parsing required.
+RSpec/Mocha/Vitest-style output for Kotest's `DescribeSpec`, via a real
+Gradle plugin -- no CLI wrapper or text-output parsing required.
 
 `kotidy` hooks Gradle's own `TestListener` API directly and walks the real
 nested `TestDescriptor.parent` chain Kotest's `DescribeSpec`/Gradle's JUnit
@@ -62,7 +62,9 @@ with Vitest's own `Test Files`/`Tests`/`Duration` footer instead,
 right-justified the same way. `Test Files` counts distinct top-level spec
 classes.
 
-## Why not an existing plugin
+## Things to know
+
+### Why not an existing plugin
 
 Two real candidates exist on the Gradle side, and neither covers this gap:
 
@@ -80,7 +82,7 @@ reports, and this plugin replaces the whole test-running task (its own
 switching, and swapping the test task itself is a bigger commitment than a
 `TestListener` add-on.
 
-## Writing tests
+### Writing tests
 
 `kotidy`'s own formatting logic (`Styles.kt`) has no Gradle API dependency --
 it's tested directly with Kotest's `DescribeSpec`, using the same
@@ -91,7 +93,7 @@ in a consuming project and reading real console output. For how we write
 those Kotest specs more generally -- context nesting, the `subject` pattern,
 mocking and stubbing -- see [docs/FRAMEWORK.md](docs/FRAMEWORK.md).
 
-## Limitations
+### Limitations
 
 - Tree order follows completion order, which matches declaration order for
   serial tests but can reorder under parallel test execution.

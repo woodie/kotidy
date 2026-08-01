@@ -11,7 +11,7 @@ RSpec/Mocha/Vitest-style output for Kotlin that works with Kotest's
 `DescribeSpec` by integrating as a real Gradle plugin. It hooks Gradle's
 own `TestListener` API directly, so every `Test` task gets the tree
 renderer automatically. Pick the style that reads best for your team once,
-then leave it -- CI output and local runs match forever after.
+then leave it.
 
 ## Installation
 

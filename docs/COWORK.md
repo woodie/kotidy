@@ -28,6 +28,12 @@ plugin").
   Not wired into regular `build`/`test`/`check` since it renders using whatever the
   *last published* version does, which could be stale against an uncommitted local
   change.
+- **`-fv`'s unit-suffix color is `#b9e4b4`, not ANSI-16 bright green.** A real
+  `vitest run` color-picker readout showed the actual shade; the old
+  `ANSI_BRIGHT_GREEN` (`92`, closer to `#2ee721`) was a guess. Now a 24-bit
+  true-color `ANSI_VITEST_UNIT` (`38;2;185;228;180`) since no ANSI-16 entry is
+  close -- see `gorderly`'s `docs/COWORK.md` for the full note, ported
+  identically here.
 
 ## Naming
 

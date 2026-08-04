@@ -29,6 +29,7 @@ private const val ANSI_GREEN = "[32m"
 private const val ANSI_YELLOW = "[33m"
 private const val ANSI_CYAN = "[36m"
 private const val ANSI_GRAY = "[90m"
+
 // ANSI_VITEST_UNIT: real Vitest's own unit-suffix color (#b9e4b4); no ANSI-16 entry matches it.
 private const val ANSI_VITEST_UNIT = "[38;2;185;228;180m"
 

@@ -54,9 +54,12 @@ written by inspection, verified via `make build`/`make test` on the user's own M
 
 ## Current status
 
-`com.netpress.kotidy` `v0.1.0` is live and resolvable from `gradlePluginPortal()`.
-Consumed by `next-caltrain-kotlin`, `humane-kotlin`, and `huck` via
-`id("com.netpress.kotidy") version "0.1.0"` -- no sibling checkout or composite build
-needed by any of them anymore. CI has a tag-triggered publish job for future releases
-(`v0.1.0` itself was published manually, since GitHub reads a tag-triggered workflow
-from the commit the tag points to, and that commit predates the job).
+`com.netpress.kotidy` `v0.1.1` is tagged and pushed; `v0.1.0` is confirmed live and
+resolvable from `gradlePluginPortal()`. Consumed by `next-caltrain-kotlin`,
+`humane-kotlin`, and `huck` via `id("com.netpress.kotidy") version "0.1.0"` -- still
+pinned to `0.1.0` until each is bumped separately, no sibling checkout or composite
+build needed by any of them anymore either way. CI has a tag-triggered publish job
+(`./gradlew publishPlugins`, gated on `refs/tags/v*`) that should have run against
+`v0.1.1` automatically -- unlike `v0.1.0`, which was published manually since that
+commit predated the job -- but that automated run itself isn't yet confirmed green
+from a real Actions log, only that the tag push succeeded.

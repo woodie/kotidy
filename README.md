@@ -19,7 +19,7 @@ Published and approved on the [Gradle Plugin Portal](https://plugins.gradle.org/
 
 ```kotlin
 plugins {
-    id("com.netpress.kotidy") version "0.1.0"
+    id("com.netpress.kotidy") version "0.1.1"
 }
 ```
 

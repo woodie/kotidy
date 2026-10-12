@@ -54,17 +54,12 @@ written by inspection, verified via `make build`/`make test` on the user's own M
 
 ## Current status
 
-`com.netpress.kotidy` `v0.1.1` is tagged and pushed; `v0.1.0` is confirmed live and
-resolvable from `gradlePluginPortal()`. Consumed by `next-caltrain-kotlin`,
-`humane-kotlin`, and `huck` via `id("com.netpress.kotidy") version "0.1.0"` -- still
-pinned to `0.1.0` until each is bumped separately, no sibling checkout or composite
-build needed by any of them anymore either way. CI has a tag-triggered publish job
-(`./gradlew publishPlugins`, gated on `refs/tags/v*`). **`v0.1.1` was never
-published**: its tag-triggered run (2026-08-04) failed with "Unauthorized!" --
-the `GRADLE_PUBLISH_KEY`/`GRADLE_PUBLISH_SECRET` secrets were stale after the old
-dev computer was lost. Re-set 2026-10-12 from `~/.gradle/gradle.properties`,
-whose key `./gradlew publishPlugins --validate-only` confirmed works (it answers
-"version 0.1.0 exists already", which proves the credentials were accepted).
-The `v0.1.1` tag also points at a commit whose `build.gradle.kts` still says
-`version = "0.1.0"`, so rerunning that run would only hit "exists already" --
-the next release needs the version bumped in `build.gradle.kts` before tagging.
+`com.netpress.kotidy` `v0.1.1` re-tagged 2026-10-12 on the version-bump commit,
+for `CI.yml`'s tag-triggered `publish` job to publish (confirm on the Portal). Consumed by `next-caltrain-kotlin`, `humane-kotlin`,
+and `huck` via `id("com.netpress.kotidy") version "0.1.0"` -- still pinned to
+`0.1.0` until each is bumped separately; `build.gradle.kts`'s own dogfood pin is
+`0.1.0` too. The original `v0.1.1` tag (2026-08-04) was never published: its run
+failed "Unauthorized!" on stale `GRADLE_PUBLISH_*` secrets (re-set 2026-10-12
+from `~/.gradle/gradle.properties`), and it pointed at a commit whose
+`build.gradle.kts` still said `version = "0.1.0"`. The tag was deleted and
+recreated on the version-bump commit, same fix as `rutidy`'s.

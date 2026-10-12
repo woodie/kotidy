@@ -54,8 +54,8 @@ written by inspection, verified via `make build`/`make test` on the user's own M
 
 ## Current status
 
-`com.netpress.kotidy` `v0.1.1` re-tagged 2026-10-12 on the version-bump commit,
-for `CI.yml`'s tag-triggered `publish` job to publish (confirm on the Portal). Consumed by `next-caltrain-kotlin`, `humane-kotlin`,
+`com.netpress.kotidy` `v0.1.1` published 2026-10-12, live on the Gradle Plugin
+Portal -- the first release published by `CI.yml`'s tag-triggered `publish` job. Consumed by `next-caltrain-kotlin`, `humane-kotlin`,
 and `huck` via `id("com.netpress.kotidy") version "0.1.0"` -- still pinned to
 `0.1.0` until each is bumped separately; `build.gradle.kts`'s own dogfood pin is
 `0.1.0` too. The original `v0.1.1` tag (2026-08-04) was never published: its run
